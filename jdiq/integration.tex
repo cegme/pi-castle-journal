@@ -1,0 +1,244 @@
+
+\section{Uncertain Data Integration}
+\label{sec:integration}
+
+Many systems that utilize crowdsourced annotation tasks treat the results as ground truth due to the overconfidence of having a human workforce.  In practice, Turker responses have a tendency to be noisy or conflicted, thus increasing the difficulty of establishing veracity.  This means that results from the machine learning model are uncertain as well as the crowdsourced answers.  \sysName is equipped with a means of managing both types of uncertainties and integrating them into a consistent result for maximum accuracy.  In this section we motivate the need for a probabilistic approach to quality control and truth discovery and describe the generative Bayesian model implemented in \sysName.
+
+\subsection{Probabilistic Evidence}
+
+The de facto technique for performing quality control in a crowdsourced environment is to redundantly post the question to a number of Turkers and take a majority vote.  This naive technique is ineffective approach and there are a number reasons for wanting to pursue a probabilistic means of data integration.  
+
+First, not all Turkers have the same capabilities and not all votes should be treated equally.  \sysName uses the expectation maximization model of Dawid \& Skene~\cite{1979} that identifies the individual reliabilities of Turkers and the confidence of their answers~\cite{Ipeirotis:2010:QMA:1837885.1837906}.  This approach has proven effective for reducing the influence of malicious workers and spammers, however, it is less suited to ambigious or difficult questions that justifiably split the workforce.  
+
+Results are generally truncated to the maximum vote-getter and treated as truth.  Information pertaining to the ambiguity of the response is thrown out. \sysName is one of the first systems to integrate crowdsourced answers into the system in a principled manner not by replacement, but by probabilistic combination.  \sysName believes that truth should be inferred and maximum votes not taken as fact. The system treats Turker responses as individual pieces of evidence and arrives at a label distribution combining all crowdsourced information with additional information from the machine model.  
+
+We now describe \sysName's approach in the context of the Bayesian theory of evidence.
+
+
+
+%The current gold standard method is to ask a question to a group of people, say 3 or 5, and take a majority vote among all the answers.  While it can be an effective way of selecting the most likely answer, it is unable to handle uncertainty among the workers, which is a cornerstone of the \sysName system.  Not all Turkers have the same capabilities and not all votes should be treated equally.  In addition, even capable workers may be conflicted on difficult questions and \sysName should be able to provide a confidence level for the final aggregated response.  This allows for possible rejection of the answers or integration with machine results that have their own confidence values.
+
+%We address these shortcomings of majority voting by developing two new \textit{uncertain integration} algorithms rooted in well known forms of probabilistic evidence management.  The first is a generative Bayesian model that establishes the CRF model as a prior and then combines crowd responses using Bayes's Rule.  The other follows the Dempster-Shafer evidence model and maps crowd and machine answers into probablistic mass functions for combination using Dempster's Rule.
+
+
+\eat{
+%One of the difficulties in relying on information from a crowd of sources is the possibility of a high degree of noise due to unreliable and in some cases even malicious sources.  One of the standard procedures for increasing quality control is to increase the redundancy of questions.  By asking the same question to multiple sources and aggregating the answers, we can achieve a higher probability of a good answer.
+
+%In many cases, it suffices to collect, say, 3 or 5 votes on each question and use the majority opinion.  There are potential scenarios in which this ceases to be an effective strategy.  If the probability of receiving low quality work is equal to or greater than that of receiving higher quality, it's detrimental to treat every vote of equal merit.  Confusing or difficult questions can also cause conflict among the workers and result in a mix of answers.  Taking the deterministic mode results in a loss of information about the controversy of the question, information which may prove useful in applications such as sentiment analysis or opinion-dominated questions.
+
+%Thus we are led to a desire to manifest the crowd response probabilistically, weighing votes proportionately and making decisions when conflicted on a question.  We implement two approaches for this data integration task, drawing separately from probability theory and belief theory.  The first maintains a single probability function, establishing a prior based on the machine's labeling, and updating the posterior using Bayes's Rule.  Alternatively, we combine the Turker response in the absence of the machine prior using Dempster-Shafer theory.  Both methods require an identification of the level of quality of each individual Turker.  We describe previous work that we've leveraged in the next section before outlining our two integration methods.\sean{Still may want to add Halpern and Fagin reference.}
+}
+\eat{
+%\subsection{Probabilistic Integration Pipeline}
+
+%Algorithm~\ref{alg:integration} shows the basic outline of our probabilistic integration scheme.  A first step towards probabilistic integration is to represent the data sources probabilistically, which in this case are the crowdsourced Turkers.  Each Turker is assigned a \textit{quality rating $Q$} that measures how reliable or unreliable we perceive them to be.  Explicitly, given a question, it measures the probability of the Turker choosing the correct answer versus making a random guess.  The simplest system for recovering this quality estimate, known as "honey potting", is to carefully intermix questions for which the answer is known in advance and judge Turker performance against the gold standard.  While generally effective, it lacks robustness and is defeatable to smart enough Turkers that can recognize them over time.  It is also more costly, requiring payment for answers that are already known in advance.  
+
+
+
+%Instead, we use the expectation maximization model of Dawid \& Skene~\cite{1979} that is starting to see widespread use in crowdsourced environments~\cite{Ipeirotis:2010:QMA:1837885.1837906}.  The model requires no labeled data and alternates between choosing the correct answer from weighted Turker responses and re-evaluating those weights based on individual answers until convergence.  The final output is a set of quality ratings $Q = \{Q_{1}, \dots, Q_{m}\}$ for each worker $W = \{W_{1}, \dots, W_{m}\}$.
+
+%Each worker provides a set of answers to K questions.  These answers $A = \{A_{1}, \dots, A_{K}\}$ along with the newly computed set of probabilities $Q = \{Q_{1}, \dots, Q_{m}\}$ for the workers are used to produce a single aggregated result using one of our two \textit{uncertain integration} methods.  The next two sections discuss the Bayesian and Dempster-Shafer models individually in greater detail.  The output using either is a single posterior probability distribution over the label space.
+
+%In addition to \sysName aggregating answers from multiple sources, it allows the new evidence to update our initial CRF inference. Since fields are modeled with speific dependence properties, re-running the inference algorithm has the potential to change surrounding dependent fields as well.  This \textit{constrained inference} clamps the queried token to the max likelihood value and ensures all possible labelings pass through this value.  This highlights a very strong advantage of \sysName system, in that large errors can be corrected by small, incremental changes.
+
+%The pipeline can essentially be decomposed into three distinct steps: quality estimation, answer integration, and model integration.  The first and last have appeared in previous literature.  Our main contribution is the introduction of new two methods for answer integration built from familiar probabilistic machinery.   
+ }
+\eat{
+%Amazon Mechanical Turk provides no working system for maintaining the quality and reliability of their workforce and it is generally up to the Requester to ascertain such values on their own.    More sophisticated methods estimate quality an unsupervised manner by judging each Turker's level of agreement with the mean set of answers.  Examples include Bayesian~\cite{citeulike:9437699, DBLP:journals/jmlr/RaykarY12} methods and an approach using majority vote and expectation maximization ~\cite{Ipeirotis:2010:QMA:1837885.1837906}.
+
+%We focus on a modified version of latter, attributable to Dawid and Skene~\cite{1979}, for implementation into \sysName .  For each question the EM algorithm takes a set of answers $a_{1}$,...,$a_{N}$ provided by N Turkers assumed to be drawn from a categorical distribution.  Associated with each Turker is a latent "confusion matrix" $\pi^{k}_{ij}$ that designates the probability the $k^{th}$ Turker will provide label $j$ when true answer is $i$.  Our modification simplifies to a binary accuracy variable $\pi^(k)$, which represents probability they will correctly label a question with the true answer.  The goal of Dawid and Skene's EM algorithm is to recover $\pi^{k}$ in the presence of the answers $a^{m}_{1}$,...,$a^{m}_{k}$ for a set of questions $m \in M$.
+
+%In order to obtain a sufficient number of answers to similar questions by, HITs are designed in higher cost blocks.  The single task of supplying a label to a token is worth around \$0.01.  HITs are packaged in groups of 10 questions at \$0.10 each.  This ensures that if $K$ Turkers answer the HIT, relative performance can be judged across all 10 questions.
+
+%The algorithm initializes each Turker's accuracy to 1.  It takes a majority vote among the answers to each question to define an initial answer set.  Based on this agreed upon answer set, each Turker's accuracy $\pi^{k}$ is computed.  Another majority vote weighted by $\pi^{k}$ determines a possibly different answer set.  The Turker accuracies are re-computed.  This process continues until convergence in both the "true" answer set and the $\pi^{k}$ accuracies.
+
+%Let us take a moment to define precisely how we interpret Turker quality in the context of results of the EM algorithm.  While the Dawid \& Skene approach ultimately is calculated as correct or incorrect accuracies from a set of questions, we assume a different characteristic behavior associated with this score.  Instead of the quality being a measure of whether we believe the Turker is "correct" or not, we take quality to be a measure of \textit{reliability}.  The quality score models the probability the Turker knows the correct answer and selects accordingly, while the inverse is the probability of a \textit{random guess} from the set of possible answers.  The two approaches in the next section tackle the problem of combining responses once we have an estimate of the Turkers' quality or reliability. 
+}
+
+%~ \eat{
+%~ The reason for submitting to belief theory as our main tool in the aggregation of the Turkers and machine is that it provides a natural framework arriving at a posterior distribution composed of various pieces of evidence.  While the roots of belief theory first centered around the Dempster-Shafer model, much criticism has been laid upon the model for turning up erroneous or inaccurate results.  Halpern and Fagin \cite{DBLP:journals/ai/HalpernF92} argue this is purely from a misuse of appropriating one interpretation for another.  The first view of belief function one can take is that of a generalized probability function, starting with a prior probability and updating as new evidence comes along to arrive at a conditional posterior.  On the other hand, viewing belief functions as evidence themselves leads one to use Dempster's Rule of Combination.  One presents the \textit{updating} of evidence while they other presents the \textit{combining}.  One utilizes a prior while the other does not.
+%~ 
+%~ We use this as inspiration for studying two different approaches to aggregating humans and machines akin to the differing interpretations.  In our Bayesian formulation, the CRF marginal distribution is used as a prior and \textit{updated} based on Turker responses.  Using an alternative Dempster-Shafer model, we forego the use of a prior and \textit{combine} Turker responses using Dempster's Rule of Combination.  
+%}
+
+\subsection{Bayesian Integration Model}
+
+Bayesian models of evidence are initiated with some prior and updated to a posterior accounting for additional evidence. \sysName utilizes this approach by treating the machine output as the prior and human responses as the additional evidence. 
+
+Let $A^{q} = \{A^{q}_{1}$, \dots,$A^{q}_{K}\}$ be a set of categorical random variables corresponding to the answers received from $K$ Turkers for question $q \in Q$.  The random variable $L$ follows a categorical distribution over the label space, $L_{i}$ representing the $i^{th}$ label, and $P(L)$ is the prior estimate of the label distribution for a specific token.  The choice of prior comes from the token's original CRF marginal distribution, which means we start from the machine labeling and update using new crowdsourced information.  The integration problem is to find the posterior distribution $P(L^{q}|A^{q}_{1}$,...,$A^{q}_{K})$ conditioned on the answers provided by the Turkers.  This can be calculated using Bayes's Rule:     
+
+\begin{equation}
+P(L^{q}|A^{q}_{1},...,A^{q}_{K}) = \frac{P(A^{q}_{1},...,A^{q}_{K}|L^{q})P(L^{q})}{\mathcal{Z}},
+\end{equation}
+
+where $\mathcal{Z} = \Sigma_{i}(P(A^{q}_{1},...,A^{q}_{K}|L_{i}^{q})P(L_{i}^{q}))$.  The term representing the evidence, $P(A^{q}_{1},...,A^{q}_{K}|L^{q})$, is the probability the Turker answers were generated from a specific true label.  \sysName's Bayesian model assumes Turker quality is an adequate measure of their agreement with the true label,
+
+\begin{equation}
+\label{eq:independence}
+P(A^{q}_{1},...,A^{q}_{K}|L^{q}) = \prod_{k}P(A^{q}_{k}|L^{q})
+\end{equation}
+
+\begin{equation}
+\label{eq:bayes_evidence}
+%P(A^{n}_{k}=a|L^{n}=l) = |\mathbbm{1}_{{a}\neq l} - Q_{k}| + |\mathbbm{1}_{a=l}-Q_{k}|*\frac{1}{|L|}
+P(A^{q}_{k}=a|L^{q}=l) = 1{\hskip -2.5 pt}\hbox{I}_{{a}= l}* Q_{k} + (1-Q_{k})*\frac{1}{|L|}
+\end{equation}
+
+where $a$ and $l$ are values drawn from the label space and $Q_{k}$ is the quality of the k$^{th}$ worker.  Equation~\ref{eq:independence} follows from all Turker answers being independent of each other and equation~\ref{eq:bayes_evidence} simply restates our assumption about the use of Turkery quality $Q_{k}$.  If the answer matches the label $l$, the first term on the right hand side is the probability the Turker is reliable and answers the question truthfully.  The second term incorporates the probability they are unreliable or a spammer and through \textit{random guessing} finds the correct answer with probability $1/|L|$, $|L|$ being the number of possible labels.  If they don't match, we have the probability the Turker is unreliable, $1-Q$, and the probability a random guess produces an incorrect answer, $(L-1)/L$.
+ 
+The full model to obtain the probability of a label $L^q$ given turker answers $A^{q}_1 \ldots A^{q}_K$ is
+
+\begin{align}
+\label{eq:full_bayes}
+P(L^{q}&=l|A^{q}_{1}=a_{1},...,A^{q}_{K}=a_{k}) = \nonumber\\
+                 &\frac{1}{Z}P(L^{q}=l)\prod_{k}\big(1{\hskip -2.5 pt}\hbox{I}_{{a_{k}}=l} *Q_{k}  + (1-Q_{k})*\frac{1}{|L|}\big)
+%P(&L^{n}=l|A^{n}_{1}=a_{1},...,A^{n}_{K}=a_{k}) = \\
+%&P(L^{n}=l)\prod_{k}\big(|\mathbbm{1}_{{a_{k}}\neq l} - Q_{k}|  + |\mathbbm{1}_{a_{k}=l}-Q_{k}|*\frac{1}{|L|}\big)
+\end{align}
+
+Using equation~\ref{eq:full_bayes} for all possible labels $l$ and renormalizing produces a new posterior distribution accounting for both the initial ML extracted result and evidence gathered from the crowd.  The product can even be extended and updated as new evidence comes in over time allowing for a persistently updateable system of truth management.  This approach has been considered using a different technique in~\cite{Sheng:2008:GLI:1401890.1401965}.  While currently evidence is designed to come from the crowd in \sysName , there is no explicit restriction preventing future updates from incorporating evidence from a number of different extractions as well as the crowd.  We close this section with an example to better illustrate the integration algorithm.
+
+\begin{example}
+\label{ex:bayes}
+Assume a binary question is answered by three Turkers.  Turker A has quality 0.9 and answers with label 0, Turker B has quality 0.4 and answers with label 1, and Turker C also has quality 0.5 and also responds with label 1.  The prior CRF marginal probability over \{0,1\} is \{0.5,0.5\}.  A majority vote among the three Turkers would give label 1, even though both are of relatively low quality.  The Bayesian combination can be found from equation~\ref{eq:full_bayes}, 
+%\begin{equation}
+\begin{align}
+P(L=0|&A,B,C) \nonumber\\
+&= P(L=0)P(L=0|A)P(L=0|B)P(L=0|C)\nonumber\\
+	        &= (0.5)\left(0.9 + (0.1)(\frac{1}{2})\right)(0.6)(\frac{1}{2})(0.5)(\frac{1}{2})\nonumber\\
+	        &\approx .036\\
+P(L=1|&A,B,C) \nonumber\\
+&= P(L=1)P(L=1|A)P(L=1|B)P(L=1|C)\nonumber\\
+	        &= (0.5)(0.1)(\frac{1}{2})\left(0.4 + (0.6)(\frac{1}{2})\right)\left(0.5 + (0.5)(\frac{1}{2}\right)\nonumber\\
+	        &\approx .013
+\end{align}
+%\end{equation}
+After combining and normalizing, the final distribution over \{0,1\} is \{0.73,0.27\}.  Instead of truncating and taking label 0 as truth, this binary distribution would be retained in the system.  If task the budget were to increase, this question might be chosen again and the distribution refined even further.
+\end{example}
+
+\subsection{Data Integration Pipeline}
+
+Here we briefly summarize for clarity the entire data integration pipeline in Algorithm~\ref{alg:integration}.  After questions have been selected based on the techniques described in Section~\ref{sec:selection}, the HIT Management module produces questions and posts them to Amazon Mechanical Turk, the results of which are automatically retrieved and stored in the database.
+
+Questions are posted as HITs in batches of size N.  The fixed batch size ensures that enough Turkers answer the same questions for the EM process.  For a set of M Turkers answering an HIT of N questions, we use Dawid \& Skene to estimate accuracies for each Turker.  These accuracies are saved in a table in the database so if a worker performs more than one HIT their accuracies for each one are averaged together.  Recording the history of turker accuracy is an additional benefit of having a persistent system.
+
+For each question, the Turker accuracies and answers are integrated with model output using the Bayesian framework described in the previous section.  This produces a distribution over the label space.  Since queried tokens were pulled from clusters as per Section~\ref{sec:selection}, the answer corresponds to the selected ``representative token".  The entire reason for clustering, however, was to map this distribution back to all the tokens belonging to the same cluster and satisfying some similarity threshold.  Therefore, all token accuracies belonging to a selected cluster get updated.
+
+For all documents containing tokens that were updated, constrained Viterbi inference is performed, the constraint being that the incoming transition probability is reflective of the new updated marginal distribution.  The final labeling represents an efficient integration of both human and machine computation. 
+
+\begin{algorithm}[fillcomment]
+\label{alg:integration}
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+\Input{Set of clusters $C$,\\
+CRF prior for each cluster\\}
+\Output{Labeled document d\_labeled}
+\BlankLine
+\CommentSty{//Query AMT for responses}\;
+\lnl{}ans $\leftarrow$ queryAMT()\;
+\CommentSty{//Calculate Turker qualities}\;
+\lnl{}qual $\leftarrow$ Dawid\_Skene(ans)\;
+\CommentSty{//Compute posterior distribution of answers}\;
+\lnl{}combo\_ans $\leftarrow$ Bayesian\_integrate(pr, ans, qual)\;
+\CommentSty{//constrain CRF for all tokens in clusters}\;
+\ForEach{cluster $c$ $\in$ C}
+{
+    \ForEach{tok $\in$ cluster $c$}
+        {
+            \lnl{}(docID, pos) $\leftarrow$ getToken(tok)\;
+            \lnl{}CRF(docID,pos) $\leftarrow$ combo\_ans(c)\;
+	 \lnl{}RunViterbi(CRF(docID,pos))\;
+        }  
+}
+\caption{Probabilistic Integration}
+\end{algorithm}
+
+\eat{
+\subsection{Dempster-Shafer Integration Model}
+%~ \eat{
+%~ A viable alternative is to exhibit no faith in the machine's initial marginal calculation.  After all, one could argue that by selecting only the most uncertain tokens that metric loses its value.  
+%~ }
+
+%In contrast to the Bayesian evidential model of updating a prior, the Dempster-Shafer model~\cite{shafer1976mathematical} makes no such assumption that a prior exists or is useful.  It instead seeks to combine multiple disparate forms of evidence, which are represented as mass or belief functions.  While probability theory ascribes the likelihood of single events, belief theory assigns mass to \textit{sets} of outcomes.  For example, in the flipping of a coin, a probability can only be assigned to $H$ (heads) or $T$ (tails), while belief can additionally be defined over the ambiguous set $\{H,T\}$ representing \textit{either} outcome.  Belief functions do not necessarily have to add up to $1$, though we retain this principle for simplicity without loss of generality.
+
+\eat{
+%While the Bayesian approach was inspired by an alternative interpretation of belief functions, the actual implementation is still a probability function through and through, with all of Kolmogorov's axioms defining a probability function still holding.  For evidential combination, however, we leverage the full power of belief theory and relax some of those axioms to map to a set of belief functions.  
+
+%The main difference between a belief function and a probability function is that probability functions are defined only over the \textit{measurable} subsets of a set while belief functions are defined over \textit{all} subsets (the power set) of a set~\cite{shafer1976mathematical}.
+}
+\begin{example}
+\label{eq:coin1}
+We can assign simple belief functions to the flipping of a coin as per our earlier example.
+\begin{align*}
+m({H}) &= 0.4\\
+m({T}) &= 0.2\\
+m({H,T}) &= 0.4
+\end{align*}
+%The intuitive understanding of the above assignments is that we are 40\% certain that the outcome will be heads, 20\% certain that the outcome will be tails, and 40\% certain that the outcome will be either heads or tails, which is equivalent to being 40\% uncertain of the outcome (clearly we don't expect this to be a fair coin).  This formalism provides a natural bookkeeping for uncertainty management.
+\end{example}
+%Belief functions are important representations of evidence because they can be integrated using Dempster's Rule of Combination to reach a consensus.  The coin example above might represent one source's expectation of the coin's probabilities.  If another source weighed in with a different set of expectations, the two may be combined into a single model of the coin's fairness (or lack thereof).  No additions are made to the core of the Dempster-Shafer evidence model.  Our contribution lies in a unique way of assigning Turker answers to belief functions which reinforces our notion of Turker reliability.
+
+%Like with the Bayesian approach, our confidence in the correct answer is reflected in their Quality score.  Let $\mathcal{A}$ be the set of all possible labels ${1,2,...,L}$, akin to ${H,T}$ from Example~\ref{eq:coin1}.  We assume in this framework that Turkers are either reliable, getting the answer correct with belief score $Q_{k}$, or unreliable, reflected in a random guess with belief score $1-Q_{k}$.  While the use of mass functions has a long history, this assignment to reflect source accuracy is unique to the best of our knowledge.  Explicitly, for a Turker $k$ with provided answer of $a_{k}$ to the $n^{th}$ question:
+
+\begin{equation}
+m^{n}(\{2^{L}\}) = 0
+\end{equation}
+\begin{equation}
+\label{eq:mass1}
+m^{n}(\{a_{k}\}) = Q_{k}
+\end{equation}
+\begin{equation}
+\label{eq:mass2}
+m^{n}(\mathcal{A}=\{1,\dots,L\}) = 1-Q_{k}
+\end{equation}
+
+%The first equation simply states that we initialize all mass functions to zero before setting the two values below it.  After initialization, the mass corresponding to the Turker's response is set to the quality value $Q_{k}$ while the mass of the set containing all labels consists of the remaining probabilistic mass.  Thus equation~\ref{eq:mass1} reflects how certain we are in the answer and equation~\ref{eq:mass2} shows how uncertain.  Clearly a reliable Turker will have more mass peaked in the region of certainty than an unreliable one.  The set of mass functions from multiple Turkers can be combined using Dempster's Rule of Combination, which combines mass functions in a pairwise manner:
+
+\begin{equation}
+\begin{split}
+\label{eq:DS_combo}
+m_{1,2}(A) &=(m_{1}\oplus m_{2})(A)\\
+                   &=\frac{1}{1-K} \sum_{B\cap C=A\neq\emptyset} m_{1}(B)m_{2}(C),
+\end{split}
+\end{equation}
+
+\begin{equation}
+\label{eq:K}
+K=\sum_{B\bigcap C=\emptyset}m_{1}(B)m_{2}(C).
+\end{equation}
+
+%Dempster's Rule is essentially an outer product over all sets that share a common intersection, normalized by a factor that includes the number of mutually exclusive sets.  The combination is both associative and commutative.
+
+%Our application of the procedure is to map all HIT responses to mass functions and combine them one-by-one in turn to produce a single combined mass function $m_{comb}$.  Any remaining uncertainty in $m_{comb}(\mathcal{A})$ is added to all the singleton functions and re-normalized to produce a single probability function.  The original belief formulation is also stored in \sysName in case new evidence arrives at a later time.
+
+\begin{example}
+\label{ex:DS}
+Given the same Turkers and answers from Example~\ref{ex:bayes}, Dempster's Rule of Combination may also be used to combine them.  First, we map them to mass functions using equations~\ref{eq:mass1} and ~\ref{eq:mass2}:
+\begin{align*}
+m_{A}(\{0\}) = 0.9, \text{ } m_{A}(\{1\}) &= 0, \text{ } m_{A}(\{0,1\}) = 0.1\nonumber\\
+m_{B}(\{0\}) = 0, \text{ } m_{B}(\{1\}) &= 0.4, \text{ } m_{B}(\{0,1\}) = 0.6\nonumber\\
+m_{C}(\{0\}) = 0, \text{ } m_{C}(\{1\}) &= 0.5, \text{ } m_{C}(\{0,1\}) = 0.5
+\end{align*}
+We apply equations~\ref{eq:DS_combo} and~\ref{eq:K} to combine Turkers A and B, and then the result is combined with Turker C.  We leave off the K term as it applies to all of the following equations and does not change the relative distribution.
+\begin{align*}
+m_{A,B}(\{0\}) &= m_{A}(\{0\})m_{B}(\{0,1\}) = 0.54\nonumber\\
+m_{A,B}(\{1\}) &= m_{B}(\{1\})m_{A}(\{0,1\}) = 0.04\nonumber\\
+m_{A,B}(\{0,1\}) &= m_{A}(\{0,1\})m_{B}(\{0,1\}) = 0.06\nonumber\\
+\vspace{2mm}
+m_{A,B,C}(\{0\}) &= m_{A,B}(\{0\})m_{C}(\{0,1\}) = 0.27\nonumber\\
+m_{A,B,C}(\{1\}) &= ((m_{A,B}(\{1\})m_{C}(\{1\})\nonumber\\
+	 &+ m_{A,B}(\{0,1\})m_{C}(\{1\})\nonumber\\
+	 &+ m_{A,B}(\{1\})m_{C}(\{0,1\})) = 0.07\nonumber\\
+m_{A,B,C}(\{0,1\}) &= m_{A,B}(\{0,1\})m_{C}(\{0,1\}) = 0.03
+\end{align*}
+%To convert to a probability distribution, we add $m_{A,B}(0,1)$ to each of the individual components and normalize.  The final distribution over \{0,1\} is \{0.75,0.25\}, nearly identical to the result of Example~\ref{ex:bayes}.
+\end{example}
+
+%While we introduce Dempster-Shafer theory here in the context of our simpler one-answer-per-question framework currently found in \sysName , it is not to be taken in contrast with its Bayesian counterpart, but as a generalization of it.  The method will become more powerful in future work where we plan to extend functionality to allow the Turkers to provide more than one response per question when uncertain.  Reasoning over such fuzzy sets exemplifies the real power for using belief theory over probability theory.
+}
+\eat{
+\subsection{Quantifying Turker Performance}
+
+The previous section looked at ways to combine Turker answers probabilistically to arrive at a final result that is not deterministic.  This is useful for when there is controversy or confusion elicited over the answers of a question.  We use the entropy of the final label distribution to arrive at confidence value for each question.  Depending on the required accuracy of the application, a threshold on the confidence may be placed to assure only the highest quality results make it through.  In the experiments we highlight Receiver Operating Characteristic (ROC) curves that measure performance vs. answer recall.  Answers not making the cut may have their questions re-submitted to attain more information in discerning the result. 
+}
+
+

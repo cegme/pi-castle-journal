@@ -1,0 +1,39 @@
+\begin{abstract}
+The amount of text data has been growing exponentially in recent
+years.
+State-of-the-art statistical text extraction methods over this data are
+likely to contain errors.
+Recent work has shown probabilistic databases
+can store and query uncertainty over extraction results, however, these systems
+do not nately result in a reduction of error.
+In this paper we propose \sysName, a system that uses a probabilistic
+database as an anchor to execute, optimize and integrate machine and human
+computing.  Uncertain fields are crowdsourced with the goal of reducing
+uncertainty and improving accuracy.  We use information theory to optimize the
+set of questions and a novel Bayesian probabilistic model to integrate
+uncertain crowd answers back into the database.  Experiments show promising
+results in significantly reducing machine error using very small amounts of
+data.  Additionally, probabilistic integration is shown to more effectively
+resolve conflicting crowd answers and provide users with the flexibility to
+tune the desired trade-off between accuracy and recall according to the need of
+applications.
+Using crowds to assist machine-learned models proves to be a cost-effective way to
+close the ``last mile'' in terms of accuracy for text labeling and
+extraction tasks.
+
+\eat{The need to automatically process and store large amounts of
+uncertain and imprecise machine learned data has necessitated the
+use of Probabilistic Databases (PDBs) which maintain and allow
+queries that carry a degree of uncertainty. Another emerging trend
+is crowdsourcing incomplete data through frameworks such as Amazon
+Mechanical Turk.  In this paper, we introduce \sysName, an uncertain
+data management system for sequential labeling of automatically
+extracted text data. \sysName is a complete system that blends
+uncertainty management with crowdsourcing techniques designed to
+clean the data and reduce overall uncertainty.  It represents a
+merging of machine and human computation for efficient task
+solutions balancing speed, cost, and accuracy.  Work presented here
+is applied on automatic bibliographic citation labeling, though the
+techniques laid out may be applied in numerous other information
+extraction domains.\dzw{need to rewrite}}
+\end{abstract}

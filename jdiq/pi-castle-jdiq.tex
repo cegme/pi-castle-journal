@@ -1,0 +1,169 @@
+%%%%%%%%%%%%%%%%%%%%%%% file template.tex %%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% This is a general template file for the LaTeX package SVJour3
+% for Springer journals.          Springer Heidelberg 2010/09/16
+%
+% Copy it to a new file with a new name and use it as the basis
+% for your article. Delete % signs as needed.
+%
+% This template includes a few options for different layouts and
+% content for various journals. Please consult a previous issue of
+% your journal as needed.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% First comes an example EPS file -- just ignore it and
+% proceed on the \documentclass line
+% your LaTeX will extract the file if required
+%
+%\RequirePackage{fix-cm}
+%
+%\documentclass{svjour3}                     % onecolumn (standard format)
+%\documentclass[smallcondensed]{svjour3}     % onecolumn (ditto)
+%\documentclass[smallextended]{svjour3}       % onecolumn (second format)
+%\documentclass[twocolumn]{svjour3}          % twocolumn
+\documentclass[prodmode,acmjdiq]{acmsmall}
+
+
+%%%\usepackage{graphicx}
+\usepackage{breakcites}
+\input{packages}
+\input{shorthands}
+
+\usepackage[ruled]{algorithm2e}
+\renewcommand{\algorithmcfname}{ALGORITHM}
+\SetAlFnt{\small}
+\SetAlCapFnt{\small}
+\SetAlCapNameFnt{\small}
+\SetAlCapHSkip{0pt}
+\IncMargin{-\parindent}
+
+%
+% FIXME remove?
+%\smartqed  % flush right qed marks, e.g. at end of proof
+%
+
+% Metadata Information
+\acmVolume{0}
+\acmNumber{0}
+\acmArticle{0}
+\acmYear{2015}
+\acmMonth{0}
+
+\doi{0000001.0000001}
+\issn{1234-56789}
+
+
+\begin{document}
+
+\markboth{S. Goldbarg et al.}{A Probabilistically Integrated System for Crowd-Assisted Text Labeling and Extraction}
+
+\title{A Probabilistically Integrated System for Crowd-Assisted Text Labeling and Extraction}
+
+%\subtitle{Do you have a subtitle?\\ If so, write it here}
+
+%\titlerunning{Short form of title}        % if too long for running head
+
+\author{SEAN GOLDBERG
+\affil{University of Florida}
+DAISY ZHE WANG
+\affil{University of Florida}
+CHRISTAN GRANT
+\affil{Brown University}
+}
+
+%\authorrunning{Short form of author list} % if too long for running head
+
+
+%\date{Received: date / Accepted: date}
+% The correct dates will be entered by the editor
+
+%\titlerunning{pi-Castle}
+
+\input{abstract.tex}
+
+
+
+% Via http://dl.acm.org/ccs.cfm 
+\begin{CCSXML}
+<ccs2012>
+<concept>
+<concept_id>10002951.10003260.10003282.10003296</concept_id>
+<concept_desc>Information systems~Crowdsourcing</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+<concept>
+<concept_id>10002951.10003317.10003347.10003352</concept_id>
+<concept_desc>Information systems~Information extraction</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Information systems~Crowdsourcing}
+\ccsdesc[500]{Information systems~Information extraction}
+
+\keywords{Crowdsourcing, Information Extraction, Probabilistic Models}
+
+\acmformat{Sean Goldberg, Daisy Zhe Wang, and Tim Kraska, 2015. A Probabilistically Integrated System for Crowd-Assisted Text Labeling and Extraction.}
+
+\begin{bottomstuff}
+This work was sponsored by many different people FIXME.
+
+Author's addresses: S. Goldberg {and} D. Z. Wang {and} C. Grant,
+Computer \& Information Science \& Engineering Department, University of Florida;
+E457 CSE Building, PO Box 116120, Gainesville, Florida 32611-6120.
+
+Emails: seanlgoldberg@gmail.com; daisyw@cise.ufl.edu, cgrant@cise.ufl.edu
+\end{bottomstuff}
+
+\maketitle
+
+
+\input{introduction.tex}
+\input{background.tex}
+\input{system_overview.tex}
+\input{selection.tex}
+\input{integration.tex}
+\input{experiments.tex}
+\input{related_work.tex}
+\input{conclusion.tex}
+
+% For one-column wide figures use
+%\begin{figure}
+% Use the relevant command to insert your figure file.
+% For example, with the graphicx package use
+%  \includegraphics{example.eps}
+% figure caption is below the figure
+%\caption{Please write your figure caption here}
+%\label{fig:1}       % Give a unique label
+%\end{figure}
+%
+% For two-column wide figures use
+%\begin{figure*}
+% Use the relevant command to insert your figure file.
+% For example, with the graphicx package use
+  %\includegraphics[width=0.75\textwidth]{example.eps}
+% figure caption is below the figure
+%\caption{Please write your figure caption here}
+%\label{fig:2}       % Give a unique label
+%\end{figure*}
+%
+% For tables use
+\bibliographystyle{ACM-Reference-Format-Journals}
+\bibliography{springerBib}
+
+\received{May 2015}{June 2015}{July 2015}
+
+
+% BibTeX users please use one of
+%\bibliographystyle{spbasic}      % basic style, author-year citations
+%\bibliographystyle{spmpsci}      % mathematics and physical sciences
+%\bibliographystyle{spphys}       % APS-like style for physics
+%\bibliography{}   % name your BibTeX data base
+
+% Non-BibTeX users please use
+
+
+\end{document}
+

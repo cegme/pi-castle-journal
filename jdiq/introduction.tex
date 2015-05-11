@@ -1,0 +1,226 @@
+\section{Introduction}
+
+% big text data, introduce text labeling and extraction
+In recent years, there has been an explosion of unstructured text data in
+social networks like Twitter and Facebook, in enterprises via emails and
+digitized documents, and on the Web.
+Automatic information extraction (IE) over large amounts of text is important
+for applications that depend on efficient search and analysis, such as
+question answering, trend analysis, and opinion mining.
+Various types of structured information that can be extracted
+include part-of-speech labels from tweets, named entities from emails, and
+relational attributes from bibliography citations.
+
+% current IE approach and chance for errors
+The state-of-the-art approach for IE uses statistical machine learning (SML)
+models and algorithms such as hidden Markov models (HMM) and conditional random
+fields (CRF)~\cite{DBLP:conf/icml/LaffertyMP01}.  Most current IE systems
+store the maximum likelihood extraction into a database for querying, but such
+extractions using even the best models are still prone to errors even for a
+task as simple as text segmentation. Consider the following example citations.
+%\vspace{-1mm}
+\begin{example}
+\label{ex:citation} 
+\begin{sloppypar}
+\vspace{2mm} 
+\noindent \texttt{Building New Tools for Synthetic Image 
+Animation by Using Evolutionary Techniques Xavier 
+Provot, David Crochemore, Michael Boccara, Jean
+Louchet Artificial Evolution 3-540-61108-8 Springer} 
+\vspace{2mm}
+\end{sloppypar}
+\noindent \textit{With no obvious distinction between fields, the model may mislabel \texttt{Xavier} as part of the \texttt{title} rather than \texttt{author}.
+The model may also confuse treat \texttt{Artificial Evolution} as a \emph{journal} attribute or as the last \emph{author} attribute.}
+\rbox
+\end{example}
+%\vspace{-2mm}
+
+A possible means of correcting errors and improving the accuracy of SML-based
+extraction results uses a human-in-the-loop, manually validating extractions
+that the machine performs poorly on or is highly uncertain of.  When the
+corrected extractions are re-introduced into the training set, this is known as
+\textit{active learning}.
+Human annotation is expensive and time-consuming.  Platforms like Amazon
+Mechanical Turk (AMT) deploy Human Intelligence Tasks (HITs) that make it
+possible to include humans as a resource during the text
+extraction process in a \textit{convenient}, \textit{timely}, and
+\textit{scalable} fashion.  An ideal IE system would be one that efficiently
+leverages the advantages of both human and machine computation
+\cite{DBLP:journals/pvldb/WangKFF12,quinn10} into a single cohesive unit.
+
+
+%Most SML models can generate probability distributions that quantify its confidence over possible extractions, however, such uncertainty that could be used to identify possible errors is lost before entering a database. Recent work~\cite{Gupta:2006:CPD:1182635.1164210,DBLP:journals/pvldb/WangFGH10,DBLP:journals/pvldb/WickMM10,Wang11} shows the development of probabilistic databases that can store and query uncertainty in addition to the top-1 IE results.
+
+
+%In order to correct errors and improve the accuracy of SML-based extraction results to near-perfect, human assistance is needed.  This can be seen as a data cleaning problem over SML results in the ``last mile''. Humans, compared to their electronic counterparts, are able to recognize context and draw upon a wealth of previous experience to achieve better accuracy for many text extraction tasks. For example, a human can easily recognize \emph{Xavier Provot} as an \emph{author}, and \emph{Artificial Evolution} as the a \emph{journal} in Example~\ref{ex:citation}.
+
+%Platforms like Amazon Mechanical Turk (AMT) deploy Human Intelligence Tasks (HITs) that make it possible for the first time to include humans as a resource during the text extraction process in a convenient, timely, and scalable fashion. While crowdsourcing is in general more accurate, it is still far more expensive and slow than automated techniques. An ideal IE system would efficiently leverage the advantages of both human and machine computation~\cite{DBLP:journals/pvldb/WangKFF12,quinn10}.
+
+For this purpose, we introduce \sysName: a crowd-assisted SML-based IE system. \sysName uses a probabilistic database to execute, optimize, and integrate human and machine computation for improving text extraction.  The human computation aspect is powered by (AMT) and the machine computation using linear-chain CRF models.  \sysName initially employs a CRF to annotate all input text data. In contrast to other IE systems, however, \sysName uses a probabilistic data model to store IE results and manage data cleaning.  It has the ability to automatically query humans to correct the most uncertain tokens and integrates their responses back into the data model.
+
+By allowing machines to do most of the work and focusing on humans only in the ``last mile'', \sysName achieves an optimal balance
+between cost, speed, and accuracy for IE problems. We address three challenges in the design and implementation of \sysName: the probabilistic data model, selection of uncertain entries, and integration of human corrections.
+
+First, in order to utilize human computing to reduce errors and uncertainty in SML-based IE results, a probabilistic data model and system is needed to store the uncertain results as well as evidence obtained from the crowd.  We use the model described in~\cite{DBLP:conf/icde/WangMFGH10}, storing both uncertain relations and probabilistic models as first class objects.  We also implement a number of user defined functions (UDFs) for statistical inference, question selection, and uncertain data integration over this probabilistic data model to connect the SML and crowd components in \sysName.
+
+%Second, AMT questions should be automatically generated from uncertain IE results and optimized to reduce the maximum amount of errors and uncertainty given a fixed budget. Not all questions are equally informative and we use information theory over the extraction uncertainty to guide the selection of questions.  Some questions can correct multiple errors through a combination of the dependence properties of the CRF and an application to multiple redundant entries in the database.   We apply a specific set of clustering and ranking functions to optimize our information theoretic selection algorithm.
+
+The data cleaning process entails automatically selecting entries likely to be incorrect and generating questions to be pushed to AMT.  \sysName utilizes concepts from information theory such as mutual information to select the most informative entries.  This idea of informativeness is defined as those entries likely to reduce the maximum amount of error and uncertainty over the entire database.  This is a technically challenging task as tokens, represented as nodes in a graphical model, are not independent, but adhere to the dependence properties modeled by the CRF.  Correcting individual tokens can influence other surrounding tokens in the same neighborhood and \sysName takes this information into account.  Additionally, token redundancy across the database is used to make the most impactful corrections.
+
+Lastly, answers from crowdsourcing services, while generally more accurate, can still contain erroneous and conflicting information if worker qualities are low or if questions are difficult or ambiguous. One of the standard techniques is to take a majority vote among a collection of workers, but such a deterministic approach does not capture the controversy and uncertainty in crowdsourced answers. We introduce a Bayesian probabilistic integration model for combining uncertain answers. This model uses prior knowledge to estimate the confidence of Turker answers and integrate uncertain and conflicting answers in a principled manner.  
+
+%The last challenge is how to effectively integrate responses from AMT back into the database.  Crowdsourcing services, while in general more accurate than automatic processing, can still contain erroaneous and conflicting information if worker qualities are low or if questions are difficult or ambiguous.  \sysName implements a number of standard quality control mechanisms, but whereas most methods seek only to extract the maximum likelihood label, \sysName uses a Bayesian probabilistic combination model to obtain an accurate human-provided label distribution.  Crowd responses are integrated back into the database by constraining CRF nodes to this distribution before performing inference.
+
+% contribution summary
+The following are the key technical contributions of this paper:
+\begin{compactitemize}
+\item We design and implement a crowd-assisted IE system \sysName based on a CRF that uses a probabilistic database as an foundation to execute, optimize, and tightly integrate machine computation over CRF models and human computation over crowdsourcing services;
+\item We develop novel information theoretic techniques that can automatically generate AMT questions to maximally reduce uncertainty and errors in IE result by as much as $60\%$. Using data from DBLP and PubMed repositories, we show that these techniques lead to orders-of-magnitude fewer questions, reducing cost in improving the overall accuracy of extractions;
+\item We develop, implement and evaluate a Bayesian probabilistic combination model to integrate the uncertain data from multiple workers. Probabilistic integration of crowd answers can achieve up to $50\%$ over majority voting for relatively difficult questions. Additionally, such integration provides confidence values that can be used for accepting or rejecting a consensus answer.  The integrated probabilistic result gives the user the flexibility to tune the trade-off between accuracy and recall (as shown in Section~\ref{sec:experiments}) according to the need of the application.
+\end{compactitemize}
+\vspace{1mm}
+
+The paper is summarized as follows.  Section~\ref{sec:background} covers the necessary background in probabilistic databases, conditional random fields, and Amazon Mechanical Turk.  We give an overview of the \sysName system in Section~\ref{sec:system}.  Sections~\ref{sec:selection} and~\ref{sec:integration} cover our techniques for performing question selection and integration respectively.  Our experiments can be found in Section~\ref{sec:experiments}, while Sections~\ref{sec:related} and~\ref{sec:conclusion} contain the Related Work and Conclusions.
+
+\eat{
+%1. Introduce problem of information extraction
+%The web is becoming an ever increasing expanse of information and knowledge.  Unfortunately, the majority of this data is not easily manipulated or analyzed by computers.  Granting structure to the trove of unstructured data for storage in a database is the key to efficient and complex searching, querying, and analysis. Traditionally it's been the job of humans to provide such metadata and structure, filling out the database by hand, but this is typically a slow and expensive process.  Information extraction is the method of performing this annotation automatically and at scale, rapidly increasing speed and dramatically lowering costs.
+
+%Applications of information extraction include part-of-speech tagging \cite{DBLP:conf/acl/Ratnaparkhi98}, shallow parsing \cite{DBLP:conf/naacl/ShaP03}, named entity recognition \cite{DBLP:conf/cikm/Zhang04}, contact information extraction \cite{DBLP:conf/aaai/KristjanssonCVM04}, and bibliographic information extraction \cite{Wellner2004}.  One of the leading automated techniques employs the use of linear-chain conditional random fields (CRFs) \cite{DBLP:conf/icml/LaffertyMP01}, a generalization of Hidden Markov Models, for sequential tagging. Even the most state-of-the-art automated models are error-prone, however, and suffer from a lack of true contextual recognition and a lack of training data to cover the entire domain.
+
+%\eat{ Recognizing certain fields such as the title or author are simple tasks for most individuals, but represents a challenging problem for machines.    CRFs can also perform tasks such as part-of-speech annotation \cite{}XXXX and named entity recognition.
+
+%Automated processing of these tasks is a difficult proposition as evinced by the following bibliographic information extraction example.}
+
+%2. Introduce subset of text segmentation
+\begin{example}
+\label{ex:citation}
+Consider the following example scientific citation:
+
+\vspace{5mm}
+\parbox{.45\textwidth}{\textit{Building New Tools for Synthetic Image Animation by Using Evolutionary Techniques. Xavier Provot, David Crochemore, Michael Boccara, Jean Louchet Artificial Evolution 3-540-61108-8 Springer Lecture Notes in Computer Science Artificial Evolution, European Conference, AE 95, Brest, France, September 4-6, 1995, Selected Papers 1996}}
+\vspace{5mm}
+
+Even without punctuation in some locations, we are able to
+differentiate tokens into their respective fields.  A machine may
+not intuitively recognize 'Michael' or 'Jean' as being names and
+certainly doesn't understand the concept of 'Artificial Evolution'
+and why it's highly unlikely to be an author name.
+\end{example}
+
+%4. Problem: even the best machine results introduce some error
+Humans, compared to their mechanical counterparts, are able to
+recognize context and draw upon a wealth of previous experience that
+computers cannot compare with.   There is a well known tradeoff
+\cite{Quinn10crowdflow:integrating} between the level of accuracy
+achieved by human processing and the speed and financial gains from
+machine processing.
+
+%5. Introduce crowdsourcing
+Recently there has been increasing development of ''human computation
+marketplaces'' such as Amazon Mechanical Turk
+\cite{Ipeirotis:2010:AAM:1869086.1869094}.  Developing microtasks
+that can be distributed concurrently to thousands of people at once
+at reduced cost has greatly increased the utility of hiring human
+workers to do trivial tasks such as annotation, ranking, and
+searching on the internet.  While significantly cheaper than hiring
+human experts, the cost of crowdsourcing is still much greater than
+processing a task using automated techniques.  The ideal scenario
+would leverage the advantages of both human and machine computation
+efficiently.
+
+We propose the Crowd-Assisted Machine Learning, or CAMeL, a paradigm
+for the merging of human and machine intelligence.  Automated
+machine learning is run first over a task before crowdsourcing is
+used to clean up and improve elements of the output that are most
+uncertain.  Many of the core elements introduced throughout this
+paper such as uncertainty management and data integration are
+applicable to a wide range of machine learning tasks utilizing text,
+images, and speech.  As a starting point, we choose to focus on
+textual annotation here and leave additional tasks as future work.
+
+Thus we are led to introduce \sysName, a probabilistic database
+augmented with crowdsourcing, designed to take advantage of the
+strengths of human and machine computation in a unified manner for
+the purpose of textual labeling and extraction.  After a CRF model
+is used to initially annotate the data, humans are introduced to
+correct the most uncertain tokens.  Our specific notion of
+uncertainty is defined and expanded upon in Section
+~\ref{sec:selection}.  By allowing machines to do most of the work
+and focusing on humans only in the "last mile", \sysName is able to
+achieve an optimal balance between cost, speed, and accuracy in
+solving information extraction problems.  The same is true of any
+future system using the CAMeL paradigm.
+
+There are many challenges which need to be met in designing a system
+such as \sysName .  First, uncertainty needs to managed and
+maintained at all stages.  Second, questions about uncertain fields
+posed to the crowd should be minimized given a fixed cost.  Lastly,
+quality should be upheld even when dealing with a possibly noisy
+and/or conflicting crowd.
+
+Uncertainty is inherent in the construction of any system that
+operates over statistical machine learning.  Probabilistic base
+tables allow for a representation of multiple \textit{possible
+worlds} with varying probabilities and manipulations of the data
+behave according to their underlying distributions.  There is a
+philosophical reflection to be had in the treatment of data this
+way.  Decisions about the structure of data are always inferred,
+never truthed, and incoming evidence, be it from additional learning
+algorithms, human experts, or crowdsourced responses, always has the
+ability to update these decision processes.
+
+For the second challenge, only posing questions to the crowd for
+which there is a reasonable enough assumption of incorrectness can
+drastically reduce costs and allow those examples "easy enough" to
+be done by mechanical methods to be done swiftly and cheaply.
+\sysName uses information theory in a manner similar to uncertainty
+sampling in active learning for this selection process.  It also has
+the power to recognize redundancy and map multiple fields into a
+single question.
+
+The final challenge for a system like \sysName and greatest
+difficulty for integrating a crowd of non-experts is the noisiness
+of the response.  The economics of the Amazon Mechanical Turk
+marketplace provide little incentive for a worker to submit high
+quality work and weeding out the response of lazy and malicious
+workers is an area of active research in the crowdsourcing
+community.  One of the standard techniques is to take a majority
+vote among a collection of workers, but such a deterministic
+approach can be untrustworthy if all workers are of low quality and
+removes information about possible controversy or conflict from
+challenging questions.  This added information is useful in deciding
+whether to trust the crowd's decision.  Since \sysName is a
+probabilistic database, we introduce Bayesian and Dempster-Shafer
+approaches to integrate responses probabilistically.  As far we
+know, we are the first to pursue such an integration among crowd
+responses.
+
+\sysName makes a number of contributions to the burgeoning field of probabilistic data management.
+\begin{itemize}
+\item Probabilistic base tables are used to store the uncertainty in both the ML extracted results and human contributions.
+\item A novel technique that clusters fields and ranks by entropy ensures question results carry a large degree of information back into the system.  We show that compared to a random baseline our method is able to reduce the number of questions given a fixed budget by an order of magnitude.
+\item For integration of uncertain crowd results, we propose two methods based on a Bayesian framework and Dempster-Shafer belief theory that differ primarily in their initial prior distributions.  In addition to being more informative on the confidence of answers, both probabilistic integration methods achieved a gain of 7\% in accuracy over their deterministic counterpart, majority voting.
+\end{itemize}
+
+The driving application we investigate throughout the paper is
+bibliographic citation information extraction as per
+Example~\ref{ex:citation}.  The explicit task for both the machine
+and humans given a token from from a citation document is to label
+the appropriate field that token belongs to, eg., Title, Author,
+Journal, etc.  This is only one application instance and the
+\sysName system can be applied to any textual annotation task such
+as named entity recognition or relationship extraction.
+
+This paper is organized as follows.  We discuss necessary background
+information in Section~\ref{sec:background}.
+Section~\ref{sec:system} overviews of the system components and
+their interactions.  Selection and clustering of fields for question
+minimization is discussed in Section~\ref{sec:selection}.  Our
+approach to probabilistic integration is presented in
+Section~\ref{sec:integration}, while Section~\ref{sec:experiments}
+contains experimental results.  Related work is in
+Section~\ref{sec:related}.  Finally, Sections~\ref{sec:conclusion}
+and~\ref{sec:future} contain the conclusion and our future work,
+respectively. }
+
